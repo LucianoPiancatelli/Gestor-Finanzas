@@ -1,0 +1,21 @@
+{
+  "name": "Gestor de Finanzas Personales",
+  "short_name": "Finanzas",
+  "description": "Tu asistente personal para el control de gastos, presupuestos e inversiones.",
+  "start_url": "/dashboard/index",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
