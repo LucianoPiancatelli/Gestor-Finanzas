@@ -1,27 +1,33 @@
 <?php
-// Mantenemos la lectura de variables como primera opción
-$host   = getenv('DB_HOST') ?: $_SERVER['DB_HOST'] ?? 'mysql-284dd8cd-lucianopiancatelli-1cd6.f.aivencloud.com';
-$port   = getenv('DB_PORT') ?: $_SERVER['DB_PORT'] ?? '10828';
-$dbname = getenv('DB_NAME') ?: $_SERVER['DB_NAME'] ?? 'defaultdb';
-$user   = getenv('DB_USER') ?: $_SERVER['DB_USER'] ?? 'avnadmin';
-$pass   = getenv('DB_PASS') ?: $_SERVER['DB_PASS'] ?? 'AVNS_wt5RgH0q_rIEGQ1Q4Lk';
+// Datos duros extraídos directamente de tu panel de Aiven
+$host   = 'mysql-284dd8cd-lucianopiancatelli-1cd6.f.aivencloud.com';
+$port   = '10828';
+$dbname = 'defaultdb';
+$user   = 'avnadmin';
+
+// Importante: Hacé clic en el ícono de "copiar" al lado de tu contraseña en Aiven 
+// para asegurarte de que no haya cambiado y pegala acá adentro.
+$pass   = 'AVNS_wt5RgH0q_rIEGQ1Q4Lk'; 
 
 try {
+    // Apuntamos al archivo ca.pem que acabás de subir a la carpeta config/
+    $certPath = __DIR__ . '/ca.pem';
+    
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ];
 
-    // Magia negra para Render: Usamos el paquete de certificados nativo de su sistema operativo.
-    // Esto fuerza a PDO a usar el SSL oficial sin depender de archivos extra.
-    // En tu Windows 11 local (Laragon) esta ruta no existe, así que no te va a romper el entorno de desarrollo.
-    if (file_exists('/etc/ssl/certs/ca-certificates.crt')) {
-        $options[PDO::MYSQL_ATTR_SSL_CA] = '/etc/ssl/certs/ca-certificates.crt';
+    // Forzar el uso estricto del certificado de Aiven
+    if (file_exists($certPath)) {
+        $options[PDO::MYSQL_ATTR_SSL_CA] = $certPath;
         $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+    } else {
+        die("Error: No se encontró el certificado SSL en " . $certPath);
     }
 
-    $dsn = "mysql:host=" . trim($host) . ";port=" . trim($port) . ";dbname=" . trim($dbname) . ";charset=utf8mb4";
-    $pdo = new PDO($dsn, trim($user), trim($pass), $options);
+    $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
+    $pdo = new PDO($dsn, $user, $pass, $options);
     
 } catch (PDOException $e) {
     die("Error al conectar con la base de datos: " . $e->getMessage());
