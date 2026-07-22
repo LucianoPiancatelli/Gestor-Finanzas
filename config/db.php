@@ -7,12 +7,20 @@ $user   = getenv('DB_USER') ?: 'root';
 $pass   = getenv('DB_PASS') ?: '';
 
 try {
-    $pdo = new PDO("mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4", $user, $pass, [
+    $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
+    ];
+
+    // Habilitar SSL para Aiven al estar en producción (Render)
+    if (getenv('DB_HOST')) {
+        $options[PDO::MYSQL_ATTR_SSL_CA] = true;
+        $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+    }
+
+    $dsn = "mysql:host=" . $host . ";port=" . $port . ";dbname=" . $dbname . ";charset=utf8mb4";
+    $pdo = new PDO($dsn, $user, $pass, $options);
+    
 } catch (PDOException $e) {
     die("Error al conectar con la base de datos: " . $e->getMessage());
-}
-    }
 }
