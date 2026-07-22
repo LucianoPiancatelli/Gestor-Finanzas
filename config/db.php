@@ -1,29 +1,36 @@
 <?php
-// Datos quemados SOLO para probar y descartar problemas con Render
-$host   = 'mysql-284dd8cd-lucianopiancatelli-1cd6.f.aivencloud.com';
-$port   = '10828';
-$dbname = 'defaultdb';
-$user   = 'avnadmin';
-$pass   = 'AVNS_wt5RgH0q_rIEGQ1Q4Lk';
+// Función robusta para cazar las variables de entorno en contenedores Docker/Apache
+function getEnvVar($key, $default = '') {
+    $val = getenv($key);
+    if ($val === false || $val === '') {
+        $val = $_ENV[$key] ?? $_SERVER[$key] ?? $default;
+    }
+    return trim($val);
+}
+
+$host   = getEnvVar('DB_HOST', '127.0.0.1');
+$port   = getEnvVar('DB_PORT', '3306');
+$dbname = getEnvVar('DB_NAME', 'gestor_finanzas');
+$user   = getEnvVar('DB_USER', 'root');
+$pass   = getEnvVar('DB_PASS', '');
 
 try {
     $certPath = __DIR__ . '/ca.pem';
     
-    // 1. Verificamos si el certificado realmente llegó al servidor de Render
-    if (!file_exists($certPath)) {
-        die("🛑 ERROR DETECTADO: El archivo ca.pem NO se subió a Render. Tu .gitignore lo bloqueó.");
-    }
-
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::MYSQL_ATTR_SSL_CA => $certPath,
-        PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
     ];
+
+    // Si no es un entorno local y el certificado existe, activamos SSL para Aiven
+    if ($host !== '127.0.0.1' && file_exists($certPath)) {
+        $options[PDO::MYSQL_ATTR_SSL_CA] = $certPath;
+        $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+    }
 
     $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
     $pdo = new PDO($dsn, $user, $pass, $options);
     
 } catch (PDOException $e) {
-    die("❌ Error de la BD: " . $e->getMessage());
+    die("Error al conectar con la base de datos: " . $e->getMessage());
 }
